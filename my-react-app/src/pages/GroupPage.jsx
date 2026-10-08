@@ -1,69 +1,72 @@
-import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import api, { getErrorMessage } from "../api";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { DEV_API_GROUPSURL } from "../consts-data";
 import Dropdown from "react-bootstrap/Dropdown";
 import Button from "react-bootstrap/Button";
-import { useLocation } from "react-router-dom";
 import { DEV_API_AUTH } from "../consts-data";
 import Form from "react-bootstrap/Form";
 import { Modal } from "react-bootstrap";
 import { OverlayTrigger, Popover } from "react-bootstrap";
+import Spinner from "../components/Spinner";
+import StatusMessage from "../components/StatusMessage";
 
 const GroupPage = () => {
-  const location = useLocation();
   const { groupId } = useParams();
-  const [loggedIn, setLoggedIn] = useState(false);
+  const loggedIn = !!localStorage.getItem("token");
   const [group, setGroup] = useState({});
   const [error, setError] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    setLoggedIn(localStorage.getItem("token") ? true : false);
-    axios.defaults.headers.common["Authorization"] = localStorage.getItem(
-      "token"
-    )
-      ? `Bearer ${localStorage.getItem("token")}`
-      : "";
-    // console.log(localStorage);
-  }, [location]);
-
+  const [notFound, setNotFound] = useState(false);
   const [user, setUser] = useState({});
+
+  const showError = (err, fallback) => {
+    setError(getErrorMessage(err, fallback));
+    setShowAlert(true);
+  };
+
+  // Re-reads the group after every action so the page always shows server state.
+  const fetchGroup = useCallback(async () => {
+    const res = await api.get(`${DEV_API_GROUPSURL}/${groupId}/`);
+    setGroup(res.data);
+  }, [groupId]);
+
   useEffect(() => {
+    if (!loggedIn) return;
     const getUser = async () => {
       try {
-        const res = await axios.get(`${DEV_API_AUTH}/user`);
+        const res = await api.get(`${DEV_API_AUTH}/user/`);
         setUser(res.data);
-        // console.log(res);
       } catch (err) {
         console.log(err);
       }
     };
     getUser();
-  }, []);
+  }, [loggedIn]);
 
   useEffect(() => {
     const getGroup = async () => {
+      setIsLoading(true);
+      setNotFound(false);
       try {
-        const res = await axios.get(`${DEV_API_GROUPSURL}/${groupId}`);
-        setIsLoading(false);
-        setGroup(res.data);
+        await fetchGroup();
       } catch (err) {
         console.log(err);
+        setNotFound(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     getGroup();
-  }, []);
+  }, [fetchGroup]);
 
   const joinGroup = async (groupid) => {
     try {
-      const res1 = await axios.post(`${DEV_API_GROUPSURL}/${groupid}/join/`);
-      // console.log(res1.data);
-      const res2 = await axios.get(`${DEV_API_GROUPSURL}/${groupid}`);
-      setGroup(res2.data);
-      // console.log(res2.data);
-      // console.log(group);
+      await api.post(`${DEV_API_GROUPSURL}/${groupid}/join/`);
+      await fetchGroup();
     } catch (err) {
-      console.log(err);
+      showError(err);
     }
   };
 
@@ -82,31 +85,22 @@ const GroupPage = () => {
 
   const addChat = async (groupid) => {
     try {
-      const res1 = await axios.post(
-        `${DEV_API_GROUPSURL}/${groupid}/groupchat/`,
-        {
-          message_text: chat,
-        }
-      );
+      await api.post(`${DEV_API_GROUPSURL}/${groupid}/groupchat/`, {
+        message_text: chat,
+      });
       SetChat("");
-      const res2 = await axios.get(`${DEV_API_GROUPSURL}/${groupid}`);
-      setGroup(res2.data);
-      // console.log(chat);
+      await fetchGroup();
     } catch (err) {
-      console.log(err);
+      showError(err);
     }
   };
 
   const removeFromList = async (groupId, memberId) => {
     try {
-      const res = await axios.delete(
-        `${DEV_API_GROUPSURL}/${groupId}/${memberId}/remove/`
-      );
-
-      const res1 = await axios.get(`${DEV_API_GROUPSURL}/${groupId}/`);
-      setGroup(res1.data);
+      await api.delete(`${DEV_API_GROUPSURL}/${groupId}/${memberId}/remove/`);
+      await fetchGroup();
     } catch (err) {
-      console.log(err);
+      showError(err);
     }
   };
 
@@ -120,10 +114,6 @@ const GroupPage = () => {
     name: group.name,
     description: group.description,
   });
-
-  const handleEditClick = () => {
-    setEditingField(true);
-  };
 
   const handleCancelClick = () => {
     setEditable(false);
@@ -169,14 +159,12 @@ const GroupPage = () => {
     });
   }, [group]);
 
-  const [showAlert, setShowAlert] = useState(false);
   const handleSaveClick = async () => {
     try {
-      const res = await axios.put(`${DEV_API_GROUPSURL}/${groupId}/`, {
+      const res = await api.put(`${DEV_API_GROUPSURL}/${groupId}/`, {
         name: groupData.name,
         description: groupData.description,
       });
-      // setGroup(res.data);
       setGroupData({ name: res.data.name, description: res.data.description });
       setOriginalGroupData({
         name: res.data.name,
@@ -185,24 +173,16 @@ const GroupPage = () => {
       setEditable(false);
       setEditingField(null);
     } catch (err) {
-      setError(err.response.data.error.name[0]);
-      setShowAlert(true);
-      console.log(err.response.data.error.name[0]);
-      setTimeout(() => {
-        setShowAlert(false);
-      }, 3000);
+      showError(err);
     }
   };
 
   const leaveGroup = async (groupid) => {
     try {
-      const res1 = await axios.delete(
-        `${DEV_API_GROUPSURL}/${groupid}/leavegroup/`
-      );
-      const res2 = await axios.get(`${DEV_API_GROUPSURL}/${groupid}`);
-      setGroup(res2.data);
+      await api.delete(`${DEV_API_GROUPSURL}/${groupid}/leavegroup/`);
+      await fetchGroup();
     } catch (err) {
-      console.log(err.response.data);
+      showError(err);
     }
   };
 
@@ -213,29 +193,17 @@ const GroupPage = () => {
     disliked: null,
   });
 
-  const addLike = async (groupid) => {
+  const rate = async (action) => {
     try {
-      const res = await axios.post(`${DEV_API_GROUPSURL}/${groupid}/like/`);
-      // console.log(res);
-      const res2 = await axios.get(`${DEV_API_GROUPSURL}/${groupId}`);
-      setGroup(res2.data);
-      setClicked({ liked: true });
+      await api.post(`${DEV_API_GROUPSURL}/${groupId}/${action}/`);
+      await fetchGroup();
+      setClicked(action === "like" ? { liked: true } : { disliked: true });
     } catch (err) {
-      console.log(err);
+      showError(err);
     }
   };
-
-  const addDislike = async (groupid) => {
-    try {
-      const res = await axios.post(`${DEV_API_GROUPSURL}/${groupid}/dislike/`);
-      // console.log(res);
-      const res2 = await axios.get(`${DEV_API_GROUPSURL}/${groupId}`);
-      setGroup(res2.data);
-      setClicked({ disliked: true });
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  const addLike = () => rate("like");
+  const addDislike = () => rate("dislike");
 
   const navigate = useNavigate();
   const clickMember = async (userid) => {
@@ -250,9 +218,9 @@ const GroupPage = () => {
   return (
     <div className="groupPage">
       {isLoading ? (
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+        <Spinner />
+      ) : notFound ? (
+        <StatusMessage>We couldn't find that group.</StatusMessage>
       ) : (
         <ul className="groupscard" key="title">
           <div className="cardetails">
@@ -321,22 +289,20 @@ const GroupPage = () => {
                   )}
                 </div>
               )}
-              {error && (
-                <Modal show={showAlert} onHide={() => setShowAlert(false)}>
-                  <Modal.Header closeButton>
-                    <Modal.Title>Error</Modal.Title>
-                  </Modal.Header>
-                  <Modal.Body>{error && error}</Modal.Body>
-                  <Modal.Footer>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowAlert(false)}
-                    >
-                      Close
-                    </Button>
-                  </Modal.Footer>
-                </Modal>
-              )}
+              <Modal show={showAlert} onHide={() => setShowAlert(false)}>
+                <Modal.Header closeButton>
+                  <Modal.Title>Error</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>{error}</Modal.Body>
+                <Modal.Footer>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowAlert(false)}
+                  >
+                    Close
+                  </Button>
+                </Modal.Footer>
+              </Modal>
               <div className="descriptiontext">
                 {editable && editingField === "description" && isOwner ? (
                   <div className="group-info-section">
@@ -407,9 +373,10 @@ const GroupPage = () => {
               <div className="likeDislikebtns">
                 <p>Join and leave your rating!</p>
                 <button
+                  aria-label="Like this group"
                   onClick={(e) => {
                     e.preventDefault();
-                    addLike(groupId);
+                    addLike();
                   }}
                   className={
                     !loggedIn || clicked.liked || !foundMember
@@ -420,9 +387,10 @@ const GroupPage = () => {
                 ></button>
                 <span className="spanlike">{group.likes}</span>
                 <button
+                  aria-label="Dislike this group"
                   onClick={(e) => {
                     e.preventDefault();
-                    addDislike(groupId);
+                    addDislike();
                   }}
                   className={
                     !loggedIn || clicked.disliked || !foundMember
@@ -444,7 +412,7 @@ const GroupPage = () => {
                     Members
                   </Dropdown.Toggle>
                   <Dropdown.Menu>
-                    {group.members.length === 0 ? (
+                    {!group.members || group.members.length === 0 ? (
                       <h2 className="nomembers">No members have joined yet</h2>
                     ) : (
                       group.members &&
@@ -460,10 +428,7 @@ const GroupPage = () => {
                                 }}
                               >
                                 {member.profile_image ? (
-                                  <img
-                                    src={member.profile_image}
-                                    alt={member.username}
-                                  />
+                                  <img src={member.profile_image} alt="" />
                                 ) : (
                                   <span style={{ visibility: "hidden" }}></span>
                                 )}
@@ -472,10 +437,7 @@ const GroupPage = () => {
                             ) : (
                               <div>
                                 {member.profile_image ? (
-                                  <img
-                                    src={member.profile_image}
-                                    alt={member.username}
-                                  />
+                                  <img src={member.profile_image} alt="" />
                                 ) : (
                                   <span style={{ visibility: "hidden" }}></span>
                                 )}
@@ -488,6 +450,7 @@ const GroupPage = () => {
                               <button
                                 type="button"
                                 className="removeMember"
+                                aria-label={`Remove ${member.username}`}
                                 onClick={() =>
                                   removeFromList(group.id, member.id)
                                 }
@@ -508,7 +471,7 @@ const GroupPage = () => {
                 ) : (
                   group.groupchat_messages &&
                   group.groupchat_messages.map((message, ind) => (
-                    <div className="chat-message" key={ind}>
+                    <div className="chat-message" key={message.id ?? ind}>
                       <p className="timestamp">{message.created_at}</p>
                       <h6 className="messageuser">{message.created_by}</h6>
                       <p>{message.message_text}</p>
@@ -531,6 +494,8 @@ const GroupPage = () => {
                         id="floatingTextarea"
                         type="text"
                         placeholder="Add a message"
+                        aria-label="Message"
+                        maxLength={200}
                         onChange={onChangeHandler}
                         value={chat}
                       />

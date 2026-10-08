@@ -9,6 +9,7 @@ import GroupPage from "./pages/GroupPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import UserPage from "./pages/UserPage";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -24,10 +25,7 @@ function App() {
         <Route path="/groups/:groupId" element={<GroupPage />} />
         <Route path="/user" element={<UserPage />} />
         <Route path="/users/:userId" element={<UserPage />} />
-        <Route
-          path="/groups/:groupId/:memberId/remove"
-          element={<GroupPage />}
-        />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
     </div>

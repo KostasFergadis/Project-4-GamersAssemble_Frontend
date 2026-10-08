@@ -154,3 +154,25 @@
   position: relative;
   bottom: 0.1px;
 }
+
+// Search box above the game grid
+.game-search {
+  display: flex;
+  gap: 0.5em;
+  justify-content: center;
+  width: 90%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-top: 2vh;
+
+  input {
+    flex: 1;
+  }
+}
+
+// Page buttons: make the current page obvious
+.pagination .page-item.active .page-link {
+  background-color: rgb(219, 22, 199);
+  border-color: rgb(219, 22, 199);
+  color: #fff;
+}

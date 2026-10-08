@@ -7,6 +7,17 @@ To set up the frontend run the following commands:
 `npm run dev` run the development server
 `npm run build` to create a build directory
 
+## Running locally
+
+```
+cd my-react-app
+cp .env.example .env.local   # set VITE_API_URL to your backend (local Django or your Render URL)
+npm install
+npm run dev
+```
+
+The backend lives in the separate `Project-4-GamersAssemble_Backend` repo. The original Heroku deployment is gone, so `VITE_API_URL` must point at a backend you run or deploy yourself (the backend repo has a one-click Render Blueprint). On Netlify set `VITE_API_URL` under Site settings > Environment variables.
+
 ## Table of Contents:
 
 1.  Project Overview

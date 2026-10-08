@@ -1,58 +1,59 @@
-import axios from "axios";
-import { useEffect, useState } from "react";
+import api, { getErrorMessage } from "../api";
+import { useCallback, useEffect, useState } from "react";
 import { DEV_API_AUTH, DEV_API_GROUPSURL, DEV_API_URL } from "../consts-data";
 import Button from "react-bootstrap/Button";
 import Dropdown from "react-bootstrap/Dropdown";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Card from "react-bootstrap/Card";
 import { Modal } from "react-bootstrap";
 import { OverlayTrigger, Popover } from "react-bootstrap";
+import Spinner from "../components/Spinner";
+import StatusMessage from "../components/StatusMessage";
 
 const UserPage = () => {
   const [user, setUser] = useState({});
   const [currentUser, setCurrentUser] = useState({});
-  const [loggedIn, setLoggedIn] = useState(false);
   const { userId } = useParams();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const navigate = useNavigate();
+  const loggedIn = !!localStorage.getItem("token");
 
   useEffect(() => {
-    setLoggedIn(localStorage.getItem("token") ? true : false);
-    axios.defaults.headers.common["Authorization"] = localStorage.getItem(
-      "token"
-    )
-      ? `Bearer ${localStorage.getItem("token")}`
-      : "";
-    // console.log(localStorage);
-  }, [location]);
-
-  useEffect(() => {
+    if (!loggedIn) return;
     const getCurrentUser = async () => {
       try {
-        const res = await axios.get(`${DEV_API_AUTH}/user/`);
-        setIsLoading(false);
-        // console.log(res);
+        const res = await api.get(`${DEV_API_AUTH}/user/`);
         setCurrentUser(res.data);
-      } catch (err) {
-        // console.log(err);
-      }
-    };
-    getCurrentUser();
-  }, []);
-
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const res = await axios.get(`${DEV_API_AUTH}/users/${userId}`);
-        setUser(res.data);
-        setIsLoading(false);
-        // console.log(res);
       } catch (err) {
         console.log(err);
       }
     };
+    getCurrentUser();
+  }, [loggedIn]);
+
+  // /user shows the logged-in user's own page, /users/:userId anyone's.
+  const getUser = useCallback(async () => {
+    try {
+      const url = userId
+        ? `${DEV_API_AUTH}/users/${userId}/`
+        : `${DEV_API_AUTH}/user/`;
+      const res = await api.get(url);
+      setUser(res.data);
+      setNotFound(false);
+    } catch (err) {
+      console.log(err);
+      setNotFound(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    setIsLoading(true);
     getUser();
-  }, [userId, currentUser]);
+  }, [getUser]);
 
   const [group, setGroup] = useState({
     game: "",
@@ -60,16 +61,12 @@ const UserPage = () => {
     description: "",
   });
 
-  // console.log(user);
-  // console.log(currentUser);
-
   const [games, setGames] = useState([]);
   useEffect(() => {
     const getGames = async () => {
       try {
-        const res = await axios.get(`${DEV_API_URL}`);
+        const res = await api.get(`${DEV_API_URL}/`);
         setGames(res.data);
-        // console.log(res.data);
       } catch (err) {
         console.log(err);
       }
@@ -79,7 +76,12 @@ const UserPage = () => {
 
   const [showAlert, setShowAlert] = useState(false);
   const [toggleText, setToggleText] = useState("Select a game");
-  const isCurrentUser = user.email === currentUser.email;
+  const isCurrentUser = !!currentUser.id && user.id === currentUser.id;
+
+  const showError = (err) => {
+    setError(getErrorMessage(err));
+    setShowAlert(true);
+  };
 
   const onChangeHandler = (e) => {
     setGroup({
@@ -91,29 +93,18 @@ const UserPage = () => {
 
   const createGroup = async (e) => {
     e.preventDefault();
-    try {
-      // console.log("Group Name:", group.name);
-      // console.log("Game Title:", group.title);
-      // console.log("Group Description:", group.description);
-      const res = await axios.post(`${DEV_API_GROUPSURL}/`, group);
-      // console.log(res);
-      setGroup({
-        game: "",
-        name: "",
-        description: "",
-      });
-      setToggleText("Select a game");
-      const res1 = await axios.get(`${DEV_API_AUTH}/user`);
-      setUser(res1.data);
-      // console.log(res1.data);
-    } catch (err) {
-      console.log(err.response.data.error);
-      setError(err.response.data.error);
+    if (!group.title) {
+      setError("Please select a game for the group.");
       setShowAlert(true);
-      setTimeout(() => {
-        // setErrorGroup("");
-        setShowAlert(false);
-      }, 3000);
+      return;
+    }
+    try {
+      await api.post(`${DEV_API_GROUPSURL}/`, group);
+      setGroup({ game: "", name: "", description: "" });
+      setToggleText("Select a game");
+      await getUser();
+    } catch (err) {
+      showError(err);
     }
   };
 
@@ -123,8 +114,7 @@ const UserPage = () => {
   };
 
   const [isEditing, setIsEditing] = useState(false);
-  const [previewImage, setPreviewImage] = useState(user.profile_image);
-  const [buttonActive, setButtonActive] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
   const [formData, setFormData] = useState({
     username: currentUser.username,
     profile_image: currentUser.profile_image,
@@ -136,10 +126,7 @@ const UserPage = () => {
     if (e.target.name === "profile_image") {
       setPreviewImage(e.target.value);
     }
-    // console.log(e.target.value);
-    setPreviewImage(e.target.value);
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setButtonActive(true);
   };
 
   useEffect(() => {
@@ -152,32 +139,30 @@ const UserPage = () => {
   }, [currentUser]);
 
   const handleEdit = () => {
-    setCurrentUser(currentUser);
+    setFormData({
+      username: currentUser.username,
+      profile_image: currentUser.profile_image,
+      description: currentUser.description,
+      discord_username: currentUser.discord_username,
+    });
+    setPreviewImage(currentUser.profile_image || "");
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setFormData(formData);
     setIsEditing(false);
   };
 
   const updateUser = async (e) => {
     e.preventDefault();
     try {
-      const res1 = await axios.put(`${DEV_API_AUTH}/user/`, formData);
-      // console.log(res1);
+      await api.put(`${DEV_API_AUTH}/user/`, formData);
       setIsEditing(false);
-      // window.location.reload();
-      const res2 = await axios.get(`${DEV_API_AUTH}/user/`);
-      setCurrentUser(res2.data);
+      const res = await api.get(`${DEV_API_AUTH}/user/`);
+      setCurrentUser(res.data);
+      setUser(res.data);
     } catch (err) {
-      console.log(err.response.data.error);
-      setError(err.response.data.error);
-      setShowAlert(true);
-      setTimeout(() => {
-        // setErrorUser("");
-        setShowAlert(false);
-      }, 3000);
+      showError(err);
     }
   };
   const handleKeyDown = (e) => {
@@ -188,22 +173,25 @@ const UserPage = () => {
   };
 
   const removeGroup = async (groupId) => {
+    if (!window.confirm("Delete this group? This cannot be undone.")) return;
     try {
-      const res1 = await axios.delete(`${DEV_API_GROUPSURL}/${groupId}`);
-      setGroup(res1.data);
-      const res2 = await axios.get(`${DEV_API_AUTH}/user`);
-      setUser(res2.data);
+      await api.delete(`${DEV_API_GROUPSURL}/${groupId}/`);
+      await getUser();
     } catch (err) {
-      console.log(err);
+      showError(err);
     }
   };
 
   return (
     <div className="userpage">
       {isLoading ? (
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+        <Spinner />
+      ) : notFound ? (
+        <StatusMessage>
+          {loggedIn || userId
+            ? "We couldn't find that user."
+            : "Please log in to see your profile."}
+        </StatusMessage>
       ) : (
         <div>
           <div className="usercontainer">
@@ -252,10 +240,20 @@ const UserPage = () => {
                     onChange={onChange}
                     onKeyDown={handleKeyDown}
                   />
-                  <img className="preview-img" src={previewImage} />
+                  {previewImage && (
+                    <img
+                      className="preview-img"
+                      src={previewImage}
+                      alt="Preview"
+                    />
+                  )}
                 </>
               ) : user.profile_image ? (
-                <img className="normal-img" src={user.profile_image} />
+                <img
+                  className="normal-img"
+                  src={user.profile_image}
+                  alt={`${user.username}'s avatar`}
+                />
               ) : (
                 <span style={{ visibility: "hidden" }}></span>
               )}
@@ -383,7 +381,7 @@ const UserPage = () => {
                 >
                   <ul className="group-details">
                     <li>
-                      {group.owner.email === user.email ? (
+                      {group.owner.id === user.id ? (
                         <span>Group's owner</span>
                       ) : (
                         <div>
@@ -391,11 +389,10 @@ const UserPage = () => {
                           <div>
                             <button
                               className="owner-username"
-                              onClick={(e) =>
-                                e.preventDefault()(
-                                  (window.location.href = `/users/${group.owner.id}`)
-                                )
-                              }
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate(`/users/${group.owner.id}`);
+                              }}
                             >
                               {group.owner.username}
                             </button>
@@ -421,19 +418,18 @@ const UserPage = () => {
                     </li>
                   </ul>
                   <div className="group-delete">
-                    {group.owner.email === currentUser.email &&
-                      currentUser.email === user.email && (
-                        <button
-                          className="delete-button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            removeGroup(group.id);
-                          }}
-                        >
-                          Delete group
-                        </button>
-                      )}
+                    {isCurrentUser && group.owner.id === currentUser.id && (
+                      <button
+                        className="delete-button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          removeGroup(group.id);
+                        }}
+                      >
+                        Delete group
+                      </button>
+                    )}
                   </div>
                 </Link>
               ))}

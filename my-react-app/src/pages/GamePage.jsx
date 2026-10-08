@@ -1,32 +1,39 @@
-import axios from "axios";
+import api from "../api";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DEV_API_URL } from "../consts-data";
+import Spinner from "../components/Spinner";
+import StatusMessage from "../components/StatusMessage";
 
 const GamePage = () => {
   const { gameId } = useParams();
   const [game, setGame] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+
   useEffect(() => {
     const getGame = async () => {
+      setIsLoading(true);
+      setError(false);
       try {
-        const res = await axios.get(`${DEV_API_URL}/${gameId}`);
+        const res = await api.get(`${DEV_API_URL}/${gameId}/`);
         setGame(res.data);
-        setIsLoading(false);
-        // console.log(res.data);
       } catch (err) {
         console.log(err);
+        setError(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     getGame();
-  }, []);
+  }, [gameId]);
 
   return (
     <div className="gamePage">
       {isLoading ? (
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+        <Spinner />
+      ) : error ? (
+        <StatusMessage>We couldn't find that game.</StatusMessage>
       ) : (
         <div className="card">
           <div className="card-body">
@@ -46,10 +53,10 @@ const GamePage = () => {
               </li>
               <li>
                 <span>Genre: </span>
-                {game.genre && game.genre.map((item) => item.name)}
+                {game.genre && game.genre.map((item) => item.name).join(", ")}
               </li>
               <li>
-                <img className="exploreImg" src={game.image} />
+                <img className="exploreImg" src={game.image} alt={game.title} />
               </li>
               <li>
                 <span>Description: </span>
@@ -58,8 +65,8 @@ const GamePage = () => {
             </ul>
             <h2 className="groupstitle">Groups</h2>
             <h4 className="subtitle">
-              Create a new group in your profile page by clicking on your
-              username located at the bottom or top of the page
+              Create a new group from your profile page: click your username in
+              the navigation bar or the footer.
             </h4>
             <div className="gamepagetext">
               {game.groups && game.groups.length === 0 ? (

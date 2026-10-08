@@ -10,3 +10,65 @@
 * {
   font-family: "Orbitron", sans-serif;
 }
+
+// Load failures and empty results
+.status-message {
+  margin: 12vh auto 0;
+  max-width: 480px;
+  padding: 1.5em;
+  text-align: center;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+  button {
+    margin-top: 0.5em;
+    padding: 0.4em 1.2em;
+    border: 1px solid #000;
+    border-radius: 6px;
+    background: #fff;
+
+    &:hover {
+      background: #000;
+      color: #fff;
+    }
+  }
+}
+
+.notfound {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  text-align: center;
+  color: #fff;
+  background-color: #1e274d;
+
+  h1 {
+    font-size: 6rem;
+  }
+}
+
+// Visible keyboard focus everywhere
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgb(219, 22, 199);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .headline,
+  .head-author {
+    opacity: 1;
+  }
+}
