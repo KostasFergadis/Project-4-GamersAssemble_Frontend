@@ -1,7 +1,6 @@
 .home {
   display: flex;
   justify-content: center;
-  margin-top: 2em;
 }
 
 .home-header {
@@ -17,7 +16,8 @@
   background-size: cover;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
+  width: 100%;
+  min-height: calc(100vh - 64px);
   text-align: center;
   justify-content: center;
 }
@@ -69,10 +69,10 @@
     font-size: 13px;
   }
   .headline {
-    font-size: 3.8vw;
+    font-size: clamp(1.2rem, 5.6vw, 1.8rem);
     width: 90%;
   }
   .head-author {
-    font-size: 2vw;
+    font-size: 0.9rem;
   }
 }

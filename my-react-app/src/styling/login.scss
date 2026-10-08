@@ -1,69 +1,94 @@
-.form-body-login form {
-  position: relative;
-  top: 3rem;
-}
-
-.main-form-login {
+// Shared by the login and register pages.
+.main-form-login,
+.main-form-register {
   display: flex;
-  background: linear-gradient(0deg, rgb(150, 149, 149), rgba(16, 15, 15, 0.9));
   justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 12vh);
+  align-items: flex-start;
+  padding: 40px 16px 56px;
+  background: linear-gradient(0deg, rgb(150, 149, 149), rgba(16, 15, 15, 0.9));
 }
 
-.form-body-login {
-  height: 43em;
-  width: 35em;
-  top: 2vh;
-  margin-bottom: 8em;
-  margin-top: 6em;
-  position: relative;
+.form-body-login,
+.form-body-register {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  padding: 40px 28px 40px;
+  border-radius: 12px;
+  background-color: rgb(205, 203, 203);
   background-image: linear-gradient(
       0deg,
       rgb(25, 24, 24),
       rgba(156, 151, 151, 0.4)
     ),
     url("/images/auth-bg.jpg");
-  padding: 20px 30px 0 30px;
-  border-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  // Native size (not cover) keeps the large polygons of the original look.
+  background-size: auto;
+  background-position: 0 0;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-.main-form-login {
-  margin-top: 4vh;
-  min-height: calc(100vh - 12vh);
-  width: 100vw;
-  button {
-    position: relative;
-    top: 3em;
-    width: 8em;
-  }
-  input {
-    font-size: 15px;
-    width: 28em;
-    height: 3.2em;
-    text-align: center;
-  }
-  button:active {
-    transform: scale(0.9);
-  }
-
-  button:hover {
-    background-color: #063a88;
-  }
+.insidecard,
+.registerinside {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
 }
 
-.mt-3 {
+.logintitle,
+.registertitle {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   text-align: center;
-  position: relative;
-  margin-bottom: auto;
-  font-size: 20px;
-  top: 4em !important;
+  text-transform: uppercase;
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  font-weight: 500;
+  color: white;
+  border-bottom: 2px solid #0d0d0d;
+}
+
+.main-form-login .form-control,
+.main-form-register .form-control {
+  height: 46px;
+  padding: 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.main-form-login .form-control:focus,
+.main-form-register .form-control:focus {
+  outline: none;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+}
+
+.btncontainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.form-btn {
+  min-width: 170px;
+  height: 48px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+.form-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.form-body-login .mt-3 {
+  margin-top: 24px !important;
+  text-align: center;
+  font-size: 0.9rem;
 }
 .text-muted a {
   text-decoration: none;
 }
-
 .text-muted a:hover {
   text-decoration: underline;
 }
@@ -71,100 +96,13 @@
   color: #ff4500;
 }
 
-.logintitle {
-  text-align: center;
-  position: relative;
-  font-size: 40px;
-  top: 1em;
-  color: white;
-  padding: 10px 20px;
-  text-transform: uppercase;
-  border-bottom: 2px solid #0d0d0d;
-}
-
-.insidecard {
-  align-items: center;
-  justify-content: center;
-  display: flex;
-  margin-top: 30px;
-  margin-bottom: 20px !important;
-  flex-direction: column;
-}
-
-.buttonlink {
-  display: flex;
-  height: 2px !important;
-  position: relative;
-  align-items: center;
-  flex-direction: column;
-}
-
-.inputs {
-  position: relative;
-  bottom: 20px;
-  margin-bottom: 40px;
-}
-
-@media only screen and (max-width: 768px) {
-  .form-body-login {
-    width: 90vw;
-    height: 35em;
+@media (max-width: 480px) {
+  .form-body-login,
+  .form-body-register {
+    padding: 24px 18px 28px;
   }
-  .buttonandsignup {
-    position: relative;
-    bottom: 8em;
-  }
-
-  .text-muted {
-    margin-top: 3em;
-  }
-
-  .form-body-login h2 {
-    font-size: 25px;
-  }
-  .main-form-login input {
-    text-align: center;
-    left: 10px;
-    height: 2.7em;
-    width: 16em;
-  }
-
-  .logintitle {
-    margin-top: 20px;
-    top: 30px;
-  }
-  .mt-3 {
-    font-size: 15px !important;
-  }
-}
-@media only screen and (min-width: 1800px) {
-  .mt-3 {
-    top: 9em !important;
-  }
-  .buttonlink {
-    position: relative;
-    bottom: 3em;
-  }
-  .inputs {
-    position: relative;
-    bottom: 3em;
-    height: 3em;
-  }
-  .form-body-login {
-    height: 62em;
-    width: 50em;
-  }
-  .main-form-login {
-    input {
-      font-size: 16px;
-      width: 540px !important;
-    }
-    button {
-      top: 8em;
-    }
-  }
-
-  .insidecard {
-    margin-top: 5em;
+  .main-form-login,
+  .main-form-register {
+    padding-top: 24px;
   }
 }

@@ -302,6 +302,24 @@
   }
 }
 
+// Phones: 16px inputs stop iOS from zooming on focus; bigger tap targets.
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+  .remove-btn {
+    padding: 8px 12px;
+  }
+  .page-inner {
+    padding: 16px 12px 40px;
+  }
+  .surface {
+    padding: 20px 16px;
+  }
+}
+
 // Visible keyboard focus everywhere
 a:focus-visible,
 button:focus-visible,

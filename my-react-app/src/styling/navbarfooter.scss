@@ -168,6 +168,16 @@ li {
   }
 }
 
+@media (max-width: 480px) {
+  .site-footer ul {
+    gap: 4px 16px;
+  }
+  .site-footer nav a,
+  .site-footer nav button {
+    font-size: 0.85rem;
+  }
+}
+
 @media (max-width: 576px) {
   .site-header .brand {
     font-size: 0.9rem;
