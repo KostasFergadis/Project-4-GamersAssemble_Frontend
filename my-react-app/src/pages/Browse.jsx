@@ -4,6 +4,7 @@ import api from "../api";
 import { DEV_API_URL } from "../consts-data";
 import Spinner from "../components/Spinner";
 import StatusMessage from "../components/StatusMessage";
+import Pagination from "../components/Pagination";
 
 // Must match GAMES_PER_PAGE in the backend's games/views.py.
 const PAGE_SIZE = 9;
@@ -18,6 +19,7 @@ const Browse = () => {
   const [searchInput, setSearchInput] = useState(search);
   const [games, setGames] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
+  const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -29,6 +31,7 @@ const Browse = () => {
         params: { page: currentPage, search: search || undefined },
       });
       setGames(res.data.results);
+      setCount(res.data.count);
       setTotalPages(Math.ceil(res.data.count / PAGE_SIZE));
     } catch (err) {
       console.log(err);
@@ -76,27 +79,12 @@ const Browse = () => {
           Search
         </button>
       </form>
-      {totalPages > 1 && (
-        <nav aria-label="Pages">
-          <ul className="pagination">
-            {[...Array(totalPages)].map((_, i) => (
-              <li
-                key={i}
-                className={`page-item ${i + 1 === currentPage ? "active" : ""}`}
-              >
-                <button
-                  className="page-link"
-                  onClick={() => goToPage(i + 1)}
-                  aria-current={i + 1 === currentPage ? "page" : undefined}
-                >
-                  {i + 1}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
       <div className="games-container">
+        {!isLoading && !error && count > 0 && (
+          <p className="results-count">
+            {search ? `${count} result${count === 1 ? "" : "s"} for "${search}"` : `${count} games`}
+          </p>
+        )}
         {isLoading ? (
           <Spinner />
         ) : error ? (
@@ -122,6 +110,7 @@ const Browse = () => {
                     src={game.image}
                     alt={game.title}
                     loading="lazy"
+                    referrerPolicy="no-referrer"
                   />
                   <h5 className="game-title">{game.title}</h5>
                   <button
@@ -140,6 +129,7 @@ const Browse = () => {
           </div>
         )}
       </div>
+      <Pagination page={currentPage} totalPages={totalPages} onChange={goToPage} />
     </div>
   );
 };

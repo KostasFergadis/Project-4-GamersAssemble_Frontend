@@ -2,141 +2,243 @@
   padding: 0;
   margin: 0;
 }
-.navitem {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  padding: 8px;
-  margin-right: 15em;
-  height: 8vh;
-  background-color: rgb(255, 254, 254);
-  position: relative;
-  top: 12px;
-  margin-bottom: 24px;
-}
 
 li {
   list-style: none;
 }
 
-ul {
-  gap: 2em;
-  margin-bottom: 0 !important;
+// Bootstrap gives lists a 2rem left padding and loads after our styles, so
+// this needs the extra specificity of .App to win.
+.App ul,
+.App ol {
+  padding-left: 0;
+  margin-bottom: 0;
 }
 
-.primary-nav {
-  display: flex;
-  justify-content: flex-start;
-  margin-left: 4em;
-}
-.user-info-wrapper {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-}
-
-.secondary-nav {
-  display: flex;
-  justify-content: flex-end;
-  margin-right: 5.7em;
-
-  img {
-    position: relative;
-    width: 22px;
-    left: 6px;
-    border-radius: 50%;
-  }
-}
-.primary-nav a {
-  text-decoration: none !important;
-  color: black !important;
-  cursor: pointer;
-  font-weight: 600;
-}
-.primary-nav a:active {
-  transform: scale(0.9);
-}
-.secondary-nav a:active {
-  transform: scale(0.9);
-}
-
-.primary-nav a:hover {
-  color: rgb(219, 22, 199) !important;
-  text-decoration: none !important;
-  transition: all 0.2s ease-in-out;
-}
-
-.secondary-nav a {
-  text-decoration: none !important;
-  color: black !important;
-  cursor: pointer;
-  font-weight: 600;
-  margin-left: 10px;
-  margin-right: 12px;
-  transition: all 0.2s ease-in-out;
-}
-
-.secondary-nav a:hover {
-  color: rgb(219, 22, 199) !important;
-}
-.userlogout {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-}
-.donut {
-  margin: 9px 0 0 2px;
-  width: 2px;
-}
-
-//Footer
-footer {
-  height: 11vh;
-  background-color: #1e274d;
-  position: relative;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.foot {
+// ---------- Header ----------
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 8vh;
-  border: 1px solid #266388;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px #112e3f;
-  background-color: rgb(210, 213, 214);
-}
+  gap: 16px;
+  height: 64px;
+  padding: 0 16px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 
-@media only screen and (max-width: 768px) {
-  .secondary-nav {
-    img {
-      width: 24px;
-      height: auto;
+  .brand {
+    color: #111;
+    font-weight: 500;
+    font-size: 1.05rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+
+    span {
+      color: var(--accent);
     }
   }
 
-  .navitem {
-    font-size: 11px;
-    right: 32em;
-    width: 10px;
-  }
+  .header-user {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #111;
+    font-weight: 500;
+    text-decoration: none;
 
-  .foot {
-    width: 100%;
-    height: 10vh;
-  }
+    img {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
 
-  footer {
-    font-size: 12px;
+    &:hover {
+      color: var(--accent);
+    }
   }
 }
 
-.user-info:active {
-  transform: scale(0.9);
+.burger {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #111;
+  background: #fff;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  span {
+    display: block;
+    width: 20px;
+    height: 2.5px;
+    background: #111;
+    border-radius: 2px;
+    transition: transform 0.2s, opacity 0.2s, background 0.2s;
+  }
+
+  &:hover {
+    background: #f1f1f5;
+  }
+
+  &[aria-expanded="true"] {
+    background: #111;
+
+    span {
+      background: #fff;
+    }
+    span:nth-child(1) {
+      transform: translateY(7.5px) rotate(45deg);
+    }
+    span:nth-child(2) {
+      opacity: 0;
+    }
+    span:nth-child(3) {
+      transform: translateY(-7.5px) rotate(-45deg);
+    }
+  }
+}
+
+.site-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 16px;
+  min-width: 240px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  display: none;
+
+  &.open {
+    display: block;
+    animation: menu-in 0.15s ease-out;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .menu-link {
+    font: inherit;
+    font-weight: 500;
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: #111;
+    font-weight: 500;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(219, 22, 199, 0.1);
+      color: var(--accent);
+    }
+
+    &.active {
+      color: var(--accent);
+    }
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .site-header .brand {
+    font-size: 0.9rem;
+  }
+  .header-user span {
+    display: none;
+  }
+  .site-menu {
+    left: 8px;
+    right: 8px;
+  }
+}
+
+// ---------- Footer ----------
+.site-footer {
+  background: var(--navy);
+  color: #cfd4ea;
+  padding: 32px 16px 24px;
+
+  .footer-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .brand {
+    color: #fff;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+
+    span {
+      color: var(--accent);
+    }
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 28px;
+  }
+
+  nav a,
+  nav button {
+    font: inherit;
+    line-height: 1.4;
+    font-weight: 500;
+    padding: 4px 2px;
+    border: 0;
+    background: none;
+    color: #cfd4ea;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+
+    &:hover,
+    &.active {
+      color: #fff;
+      border-bottom-color: var(--accent);
+    }
+  }
+
+  .footer-note {
+    font-size: 0.8rem;
+    color: #8f96b8;
+  }
 }

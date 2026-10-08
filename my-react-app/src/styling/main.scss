@@ -7,8 +7,259 @@
 @import "./grouppage.scss";
 @import "./userpage.scss";
 
+:root {
+  --accent: #db16c7;
+  --accent-dark: #a80f98;
+  --navy: #1e274d;
+  --ink: #14161f;
+  --muted: #5d6272;
+  --line: #e4e6ee;
+  --good: #1f8a4c;
+  --bad: #c23b3b;
+  --radius: 14px;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
 * {
   font-family: "Orbitron", sans-serif;
+}
+
+// The footer always sits at the bottom, even on short pages.
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.App > div {
+  flex: 1 0 auto;
+}
+
+.spinner-border {
+  position: absolute;
+  top: 40vh !important;
+  left: 50vw !important;
+}
+
+// ---------- Shared building blocks ----------
+.page-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px 16px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.surface {
+  background: #fff;
+  color: var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 500;
+  }
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: 14px;
+  }
+  a {
+    color: var(--accent-dark);
+  }
+}
+
+.back-button {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 8px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s, color 0.15s;
+
+  &:hover {
+    background: #fff;
+    color: var(--accent);
+    transform: translateX(-2px);
+  }
+}
+
+.primary-btn,
+.ghost-btn,
+.danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.1s, border-color 0.15s;
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.primary-btn {
+  background: var(--accent);
+  color: #fff !important;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-dark);
+  }
+}
+
+.ghost-btn {
+  background: transparent;
+  border-color: var(--ink);
+  color: var(--ink) !important;
+
+  &:hover:not(:disabled) {
+    background: var(--ink);
+    color: #fff !important;
+  }
+}
+
+.danger-btn {
+  background: transparent;
+  border-color: var(--bad);
+  color: var(--bad);
+
+  &:hover:not(:disabled) {
+    background: var(--bad);
+    color: #fff;
+  }
+
+  &.small {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #eef0f6;
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+.chip-accent {
+  background: rgba(219, 22, 199, 0.12);
+  color: var(--accent-dark);
+}
+
+.count-badge {
+  display: inline-block;
+  min-width: 26px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 0.75rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(219, 22, 199, 0.12);
+  color: var(--accent-dark);
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &.member {
+    background: #e6f4ec;
+    color: var(--good);
+  }
+}
+
+.inline-form {
+  display: grid;
+  gap: 14px;
+
+  label {
+    display: grid;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .form-control,
+  .form-select {
+    font-size: 0.95rem;
+    color: var(--ink);
+  }
+}
+
+.form-error {
+  color: var(--bad);
+  font-size: 0.85rem;
+}
+
+.hint,
+.empty-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.empty-note {
+  padding: 8px 0;
+}
+
+.good {
+  color: var(--good);
+}
+.bad {
+  color: var(--bad);
+}
+
+.avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 500;
 }
 
 // Load failures and empty results
@@ -18,14 +269,14 @@
   padding: 1.5em;
   text-align: center;
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 
   button {
-    margin-top: 0.5em;
+    margin-top: 0.75em;
     padding: 0.4em 1.2em;
     border: 1px solid #000;
-    border-radius: 6px;
+    border-radius: 8px;
     background: #fff;
 
     &:hover {
@@ -54,8 +305,10 @@
 // Visible keyboard focus everywhere
 a:focus-visible,
 button:focus-visible,
-input:focus-visible {
-  outline: 3px solid rgb(219, 22, 199);
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
 

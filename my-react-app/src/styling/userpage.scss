@@ -1,388 +1,175 @@
 .userpage {
-  min-height: calc(100vh - 12vh);
-  margin-top: 5vh;
-  background: linear-gradient(135deg, #414e6b, #606c88);
+  background: linear-gradient(135deg, #2b3250, #4a5578);
+  background-attachment: fixed;
 }
 
-.usercontainer {
-  height: 100%;
-  position: relative;
-  top: 6em;
-  margin-left: 1.4vw;
+.profile-card {
+  display: grid;
+  grid-template-columns: 128px 1fr;
+  gap: 28px;
+  align-items: start;
 }
 
-.profile-details {
-  background-color: rgb(254, 254, 254);
-  border: 1px solid #ccc;
-  position: relative;
-  padding: 1rem;
-  height: 15vh;
-  top: 10px;
-  border-radius: 5px;
-  width: 32vw;
-  margin: 10px 0 17px 0;
+.profile-avatar {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--navy));
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 500;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 
-  li {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-    margin: 0.5rem;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
+}
+
+.profile-info {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+
+  h1 {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+  }
+  .bio {
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 60ch;
+    overflow-wrap: anywhere;
+  }
+  .discord span {
+    margin-right: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #5865f2;
+    color: #fff;
+    font-size: 0.7rem;
+  }
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  color: var(--muted);
+  font-size: 0.85rem;
 
   strong {
-    margin-right: 0.5rem;
-  }
-
-  input {
-    margin-left: 0.5rem;
-  }
-}
-
-.normal-img {
-  max-width: 22%;
-  position: relative;
-  margin-left: 3em;
-  bottom: 10px;
-  border-radius: 50%;
-}
-@media (min-width: 1800px) {
-  .normal-img {
-    bottom: 8px;
-  }
-
-  .profile-details {
-    height: 17vh;
-  }
-
-  .list-form .listBtn {
-    top: 5em;
+    margin-right: 4px;
+    color: var(--ink);
+    font-size: 1.3rem;
+    font-weight: 500;
   }
 }
 
-.preview-img {
-  border-radius: 50%;
-  max-width: 20%;
-  position: relative;
-  left: 23vw;
-  bottom: 60px;
+.profile-form {
+  max-width: 480px;
 }
 
-.group-delete {
-  display: flex;
-  align-items: center;
+.create-form {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: end;
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+  button {
+    justify-self: start;
+  }
 }
 
-.group-delete:active {
-  transform: scale(0.9);
-}
-
-.delete-button {
-  background-color: #c8352b;
+.section-title {
+  margin-bottom: 14px;
   color: #fff;
-  border: none;
-  border-radius: 5px;
-  padding: 0.5rem;
-  margin-left: 30px;
-}
-.delete-button:hover {
-  background-color: #fff;
-  color: #c8352b;
-  border: 1px solid #91271f;
-}
-.delete-button:active {
-  transform: scale(1);
+  font-size: 1.2rem;
+  font-weight: 500;
 }
 
-.editButtons {
-  li button {
-    border: none;
-    background-color: rgb(156, 140, 110);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin: 5px 7px 0 0;
-    font-size: 1rem;
-  }
-  li button:hover {
-    background-color: rgb(104, 93, 73);
-  }
-  li button:active {
-    transform: scale(0.9);
-  }
+.group-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
-.listBtn {
-  position: relative;
-  top: 8vh;
-}
-
-.listBtn:active {
-  transform: scale(0.9);
-}
-.creategroupcontainer {
-  display: flex;
-  justify-content: end;
-  position: relative;
-}
-
-.creategroupcontainer .card {
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 34vw;
-  position: absolute;
-  bottom: 2.4em;
-  margin-right: 3em;
-  background-color: rgb(255, 255, 255);
-  height: 48vh;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-
-.dropdown-menu {
-  max-height: 140px;
-  overflow-y: scroll;
-}
-
-.list-form {
+.group-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin: 2rem;
-}
+  padding: 0;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
 
-.list-form input {
-  margin: 0.5rem;
-  width: 13vw;
-  height: 5vh;
-  padding: 0.5rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-
-.groups-container {
-  display: flex;
-  margin-top: 22vh;
-  flex-wrap: wrap;
-  overflow-wrap: break-word;
-}
-
-.group-box {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  flex: 1 0 32%; /* Optional: This sets the width of each item */
-  padding: 1rem;
-  width: 30vw;
-  margin: 1em 4em 3em 1em;
-  background-color: rgb(254, 254, 254);
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.group-details {
-  max-width: 70%;
-  margin-right: 1em;
-  li {
-    margin-bottom: 0.5em;
-  }
-}
-
-.group-box:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transform: translateY(-4px);
-  transition: box-shadow 0.2s ease-in-out;
-  position: relative;
-  transition: all 0.2s ease-in-out;
-}
-.group-box:active {
-  box-shadow: 0 0 30px #171c25;
-}
-.userpage a {
-  text-decoration: none;
-}
-.userpage a:hover {
-  color: black;
-}
-.owner-username {
-  color: #007bff !important;
-  text-decoration: none;
-  background-color: white;
-  border: none;
-}
-
-.owner-username:hover {
-  text-decoration: underline;
-  color: #0266d1 !important;
-}
-
-.owner-username:active {
-  transform: scale(1.2) !important;
-}
-
-.group-box ul li {
-  color: black;
-  text-decoration: none !important;
-}
-
-.group-details a {
-  color: black;
-  text-decoration: none;
-}
-.dropdown button:active {
-  background-color: #a5a5a7 !important;
-}
-.btn-secondary {
-  box-shadow: 0 0 10px #000;
-}
-.gameselectbutton {
-  width: 13em !important;
-}
-.listBtn {
-  margin-top: 9vh;
-  background-color: rgb(229, 229, 229) !important;
   &:hover {
-    background-color: rgb(183, 182, 182) !important;
-  }
-}
-.list-form button {
-  position: relative;
-  top: 2vh;
-}
-
-@media (min-width: 1500px) {
-  .creategroupcontainer .card {
-    padding-bottom: 24em !important;
+    transform: translateY(-3px);
   }
 }
 
-@media (max-width: 768px) {
-  .group-delete {
-    position: relative;
-    right: 2.5px;
-  }
-  .group-box {
-    width: 80vw;
-  }
-  .editButtons {
-    li button {
-      font-size: 10px;
-      padding: 10px;
-    }
-  }
+.group-card-main {
+  flex: 1;
+  display: block;
+  padding: 20px 20px 12px;
+  color: var(--ink) !important;
+  text-decoration: none;
 
-  .dropdown button {
-    width: 11em;
-    top: 30px;
-    font-size: 10px !important;
-  }
-  .list-form {
-    button p {
-      font-size: 8px;
-    }
-    .listBtn {
-      width: 6em;
-      height: 25px;
-      top: 0;
-    }
-  }
-
-  .userpage {
-    font-size: 12px;
-  }
-  .popupuser .btn-secondary {
-    width: 10em !important;
-    font-size: 17px;
-    top: 0.5em;
-  }
-  .form-group button {
-    top: 5.5em;
-  }
-  .creategroupcontainer .card {
-    bottom: 50px;
-  }
-
-  .form-group input {
-    width: 11.5em;
-    height: 2em;
-    font-size: 9px;
-  }
-
-  .creategroupcontainer .card {
-    width: 15em;
-    bottom: 10em;
-    margin-right: 1.5em;
-    height: 29em;
-  }
-
-  .dropdown-menu {
-    max-height: 80px;
-    width: 10px !important;
-    font-size: 10px !important;
-  }
-  .normal-img {
-    top: 2em;
-  }
-  .preview-img {
-    top: 2em;
-    left: 2em;
-  }
-  .profile-details {
-    font-size: 9px;
-  }
-  .error-create {
-    width: 15em;
-    top: 40vh;
-    font-size: 10px !important;
-    margin-left: -4em;
-  }
-  .error-user {
-    margin-top: 2px;
-    width: 14em;
-  }
-  .profile-details {
-    width: 16em;
-    input {
-      width: 11.5em;
-      font-size: 9px;
-    }
-  }
-  .groups-container {
-    display: flex;
-    flex-wrap: nowrap;
-    flex-direction: column;
-    align-items: center;
+  h3 {
+    margin: 10px 0 4px;
+    font-size: 1.1rem;
+    overflow-wrap: anywhere;
   }
 }
-.userpage span {
-  font-weight: bold;
+
+.group-card-game {
+  color: var(--accent-dark);
+  font-size: 0.8rem;
+  margin-bottom: 8px;
 }
 
-.likescolor {
-  color: green !important;
+.group-card-desc {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.dislikescolor {
-  color: rgb(175, 5, 5) !important;
-}
-
-.popupuser {
+.group-card-foot {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .danger-btn {
+    margin-left: auto;
+  }
 }
 
-.popupuser .btn-secondary {
-  width: 20em;
-  position: relative;
-  margin-bottom: 70px;
-  top: 34px;
-}
-
-.popupuser .btn-secondary:active {
-  transform: scale(0.9);
-}
-
-.linksnavbar {
-  position: relative;
-  bottom: 0px;
+@media (max-width: 600px) {
+  .profile-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  .profile-info {
+    justify-items: center;
+  }
+  .profile-form {
+    width: 100%;
+    text-align: left;
+  }
 }

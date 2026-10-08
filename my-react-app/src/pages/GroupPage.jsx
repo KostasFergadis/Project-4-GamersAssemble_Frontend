@@ -1,52 +1,49 @@
-import api, { getErrorMessage } from "../api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { DEV_API_GROUPSURL } from "../consts-data";
-import Dropdown from "react-bootstrap/Dropdown";
+import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
-import { DEV_API_AUTH } from "../consts-data";
-import Form from "react-bootstrap/Form";
-import { Modal } from "react-bootstrap";
-import { OverlayTrigger, Popover } from "react-bootstrap";
+import api, { getErrorMessage } from "../api";
+import { DEV_API_AUTH, DEV_API_GROUPSURL } from "../consts-data";
+import BackButton from "../components/BackButton";
+import { ThumbDown, ThumbUp } from "../components/Icons";
 import Spinner from "../components/Spinner";
 import StatusMessage from "../components/StatusMessage";
 
+const Avatar = ({ src, name }) =>
+  src ? (
+    <img className="avatar" src={src} alt="" />
+  ) : (
+    <span className="avatar avatar-fallback" aria-hidden="true">
+      {(name || "?").charAt(0).toUpperCase()}
+    </span>
+  );
+
 const GroupPage = () => {
   const { groupId } = useParams();
+  const navigate = useNavigate();
   const loggedIn = !!localStorage.getItem("token");
-  const [group, setGroup] = useState({});
-  const [error, setError] = useState("");
-  const [showAlert, setShowAlert] = useState(false);
+
+  const [group, setGroup] = useState(null);
+  const [user, setUser] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [user, setUser] = useState({});
+  const [error, setError] = useState("");
 
-  const showError = (err, fallback) => {
-    setError(getErrorMessage(err, fallback));
-    setShowAlert(true);
-  };
+  const [chat, setChat] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ name: "", description: "" });
+  const chatBoxRef = useRef(null);
 
-  // Re-reads the group after every action so the page always shows server state.
+  const showError = (err) => setError(getErrorMessage(err));
+
+  // Re-read the group after every action so the page always shows server state.
   const fetchGroup = useCallback(async () => {
     const res = await api.get(`${DEV_API_GROUPSURL}/${groupId}/`);
     setGroup(res.data);
   }, [groupId]);
 
   useEffect(() => {
-    if (!loggedIn) return;
-    const getUser = async () => {
-      try {
-        const res = await api.get(`${DEV_API_AUTH}/user/`);
-        setUser(res.data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    getUser();
-  }, [loggedIn]);
-
-  useEffect(() => {
-    const getGroup = async () => {
+    const load = async () => {
       setIsLoading(true);
       setNotFound(false);
       try {
@@ -58,497 +55,373 @@ const GroupPage = () => {
         setIsLoading(false);
       }
     };
-    getGroup();
+    load();
   }, [fetchGroup]);
 
-  const joinGroup = async (groupid) => {
-    try {
-      await api.post(`${DEV_API_GROUPSURL}/${groupid}/join/`);
-      await fetchGroup();
-    } catch (err) {
-      showError(err);
-    }
-  };
+  useEffect(() => {
+    if (!loggedIn) return;
+    api
+      .get(`${DEV_API_AUTH}/user/`)
+      .then((res) => setUser(res.data))
+      .catch((err) => console.log(err));
+  }, [loggedIn]);
 
-  const [chat, SetChat] = useState("");
-  const onChangeHandler = (e) => {
-    SetChat(e.target.value);
-    // console.log(e.target.value);
-  };
-
-  const chatBoxRef = useRef(null);
+  // Keep the chat scrolled to the newest message.
   useEffect(() => {
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
   }, [group]);
 
-  const addChat = async (groupid) => {
+  if (isLoading) {
+    return (
+      <div className="groupPage">
+        <Spinner />
+      </div>
+    );
+  }
+  if (notFound || !group) {
+    return (
+      <div className="groupPage">
+        <StatusMessage>We couldn't find that group.</StatusMessage>
+      </div>
+    );
+  }
+
+  const members = group.members || [];
+  const isOwner = !!user.id && group.owner?.id === user.id;
+  const myMembership = members.find((m) => m.user === user.id);
+  const isMember = !!myMembership;
+  const canChat = loggedIn && (isOwner || isMember);
+  const canRate = loggedIn && isMember;
+  const rateHint = !loggedIn
+    ? "Log in to rate this group"
+    : isOwner
+    ? "You can't rate your own group"
+    : !isMember
+    ? "Join the group to rate it"
+    : undefined;
+
+  const run = async (action) => {
     try {
-      await api.post(`${DEV_API_GROUPSURL}/${groupid}/groupchat/`, {
+      await action();
+    } catch (err) {
+      showError(err);
+    }
+  };
+
+  const join = () =>
+    run(async () => {
+      await api.post(`${DEV_API_GROUPSURL}/${groupId}/join/`);
+      await fetchGroup();
+    });
+
+  const leave = () =>
+    run(async () => {
+      await api.delete(`${DEV_API_GROUPSURL}/${groupId}/leavegroup/`);
+      await fetchGroup();
+    });
+
+  const removeMember = (member) => {
+    if (!window.confirm(`Remove ${member.username} from the group?`)) return;
+    run(async () => {
+      await api.delete(`${DEV_API_GROUPSURL}/${groupId}/${member.id}/remove/`);
+      await fetchGroup();
+    });
+  };
+
+  const rate = (action) =>
+    run(async () => {
+      const res = await api.post(`${DEV_API_GROUPSURL}/${groupId}/${action}/`);
+      setGroup((g) => ({
+        ...g,
+        likes: res.data.likes,
+        dislikes: res.data.dislikes,
+        user_rating: res.data.user_rating,
+      }));
+    });
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    run(async () => {
+      await api.post(`${DEV_API_GROUPSURL}/${groupId}/groupchat/`, {
         message_text: chat,
       });
-      SetChat("");
+      setChat("");
       await fetchGroup();
-    } catch (err) {
-      showError(err);
-    }
-  };
-
-  const removeFromList = async (groupId, memberId) => {
-    try {
-      await api.delete(`${DEV_API_GROUPSURL}/${groupId}/${memberId}/remove/`);
-      await fetchGroup();
-    } catch (err) {
-      showError(err);
-    }
-  };
-
-  const [editable, setEditable] = useState(false);
-  const [editingField, setEditingField] = useState(null);
-  const [groupData, setGroupData] = useState({
-    name: group.name,
-    description: group.description,
-  });
-  const [originalGroupData, setOriginalGroupData] = useState({
-    name: group.name,
-    description: group.description,
-  });
-
-  const handleCancelClick = () => {
-    setEditable(false);
-    setEditingField(null);
-    setGroupData(originalGroupData);
-  };
-
-  const toggleEditable = (fieldName) => {
-    setEditable(true);
-    setEditingField(fieldName);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setGroupData({ ...groupData, [name]: value });
-  };
-
-  const handleInputKeyDown = (e) => {
-    if (e.keyCode === 13) {
-      e.preventDefault();
-      handleSaveClick();
-    }
-  };
-
-  const handleInputBlur = () => {
-    handleCancelClick();
-  };
-
-  const handleTextareaClick = (e) => {
-    if (editable) {
-      e.stopPropagation();
-    }
-  };
-
-  useEffect(() => {
-    setGroupData({
-      name: group.name,
-      description: group.description,
     });
-    setOriginalGroupData({
-      name: group.name,
-      description: group.description,
+  };
+
+  const startEditing = () => {
+    setDraft({ name: group.name, description: group.description });
+    setEditing(true);
+  };
+
+  const saveEdits = (e) => {
+    e.preventDefault();
+    run(async () => {
+      await api.put(`${DEV_API_GROUPSURL}/${groupId}/`, draft);
+      await fetchGroup();
+      setEditing(false);
     });
-  }, [group]);
-
-  const handleSaveClick = async () => {
-    try {
-      const res = await api.put(`${DEV_API_GROUPSURL}/${groupId}/`, {
-        name: groupData.name,
-        description: groupData.description,
-      });
-      setGroupData({ name: res.data.name, description: res.data.description });
-      setOriginalGroupData({
-        name: res.data.name,
-        description: res.data.description,
-      });
-      setEditable(false);
-      setEditingField(null);
-    } catch (err) {
-      showError(err);
-    }
   };
 
-  const leaveGroup = async (groupid) => {
-    try {
-      await api.delete(`${DEV_API_GROUPSURL}/${groupid}/leavegroup/`);
-      await fetchGroup();
-    } catch (err) {
-      showError(err);
-    }
+  const deleteGroup = () => {
+    if (!window.confirm("Delete this group? This cannot be undone.")) return;
+    run(async () => {
+      await api.delete(`${DEV_API_GROUPSURL}/${groupId}/`);
+      navigate(group.game_id ? `/games/${group.game_id}` : "/browse");
+    });
   };
 
-  const isOwner = group.owner && group.owner.email === user.email;
-
-  const [clicked, setClicked] = useState({
-    liked: null,
-    disliked: null,
-  });
-
-  const rate = async (action) => {
-    try {
-      await api.post(`${DEV_API_GROUPSURL}/${groupId}/${action}/`);
-      await fetchGroup();
-      setClicked(action === "like" ? { liked: true } : { disliked: true });
-    } catch (err) {
-      showError(err);
-    }
-  };
-  const addLike = () => rate("like");
-  const addDislike = () => rate("dislike");
-
-  const navigate = useNavigate();
-  const clickMember = async (userid) => {
-    navigate(`/users/${userid}`);
-  };
-
-  const foundMember =
-    (group.members &&
-      group.members.find((member) => member.username === user.username)) ||
-    null;
+  const messages = group.groupchat_messages || [];
 
   return (
     <div className="groupPage">
-      {isLoading ? (
-        <Spinner />
-      ) : notFound ? (
-        <StatusMessage>We couldn't find that group.</StatusMessage>
-      ) : (
-        <ul className="groupscard" key="title">
-          <div className="cardetails">
-            <div className="cardetails-body">
-              <div className="popups">
-                {!isOwner ? (
-                  <OverlayTrigger
-                    trigger="click"
-                    placement="top"
-                    overlay={
-                      <Popover>
-                        <Popover.Body>
-                          Log in to join the group and chat with your fellow
-                          members. Don't forget to leave a rating!
-                        </Popover.Body>
-                      </Popover>
-                    }
-                  >
-                    <button type="button" className="btn btn-secondary">
-                      Click here!
-                    </button>
-                  </OverlayTrigger>
-                ) : (
-                  <OverlayTrigger
-                    trigger="click"
-                    placement="top"
-                    overlay={
-                      <Popover>
-                        <Popover.Body>
-                          Edit your group details. Remove members by opening the
-                          dropdown menu
-                        </Popover.Body>
-                      </Popover>
-                    }
-                  >
-                    <button type="button" className="btn btn-secondary">
-                      Click here!
-                    </button>
-                  </OverlayTrigger>
-                )}
+      <div className="page-inner">
+        <BackButton fallback={group.game_id ? `/games/${group.game_id}` : "/browse"}>
+          Back
+        </BackButton>
+
+        <header className="surface group-header">
+          {editing ? (
+            <form className="inline-form" onSubmit={saveEdits}>
+              <label>
+                Group name
+                <input
+                  className="form-control"
+                  value={draft.name}
+                  maxLength={150}
+                  required
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                />
+              </label>
+              <label>
+                Description
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  value={draft.description}
+                  maxLength={500}
+                  required
+                  onChange={(e) =>
+                    setDraft({ ...draft, description: e.target.value })
+                  }
+                />
+              </label>
+              <div className="button-row">
+                <button className="primary-btn" type="submit">
+                  Save
+                </button>
+                <button
+                  className="ghost-btn"
+                  type="button"
+                  onClick={() => setEditing(false)}
+                >
+                  Cancel
+                </button>
               </div>
-              {editable && editingField === "name" && isOwner ? (
-                <div className="group-info-section">
-                  <span className="nametext">Group name:</span>
-                  <input
-                    className="input-group-text"
-                    id="addon-wrapping"
-                    name="name"
-                    value={groupData.name}
-                    onChange={handleInputChange}
-                    onKeyDown={handleInputKeyDown}
-                    onClick={(e) => handleTextareaClick(e, "name")}
-                  />
+            </form>
+          ) : (
+            <>
+              <div className="group-title-row">
+                <div>
+                  {group.game_id ? (
+                    <Link className="game-pill" to={`/games/${group.game_id}`}>
+                      {group.game}
+                    </Link>
+                  ) : (
+                    <span className="game-pill">{group.game}</span>
+                  )}
+                  <h1>{group.name}</h1>
                 </div>
-              ) : (
-                <div className="group-info-section">
-                  <span className="nametext">Group name:</span>
-                  {groupData.name}
-                  {isOwner && (
-                    <button
-                      className="groupEdit"
-                      onClick={() => toggleEditable("name")}
-                    >
+                {isOwner && (
+                  <div className="button-row">
+                    <button className="ghost-btn" onClick={startEditing}>
                       Edit
                     </button>
-                  )}
-                </div>
-              )}
-              <Modal show={showAlert} onHide={() => setShowAlert(false)}>
-                <Modal.Header closeButton>
-                  <Modal.Title>Error</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>{error}</Modal.Body>
-                <Modal.Footer>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowAlert(false)}
-                  >
-                    Close
-                  </Button>
-                </Modal.Footer>
-              </Modal>
-              <div className="descriptiontext">
-                {editable && editingField === "description" && isOwner ? (
-                  <div className="group-info-section">
-                    <span>Description:</span>
-                    <input
-                      className="input-group-text"
-                      id="addon-wrapping"
-                      name="description"
-                      value={groupData.description}
-                      onChange={handleInputChange}
-                      onKeyDown={handleInputKeyDown}
-                      onClick={(e) => handleTextareaClick(e, "description")}
-                    />
+                    <button className="danger-btn" onClick={deleteGroup}>
+                      Delete
+                    </button>
                   </div>
-                ) : (
-                  <div className="group-info-section">
-                    <span className="nametext">Description:</span>
-                    {groupData.description}
+                )}
+              </div>
+              <p className="group-description">{group.description}</p>
+            </>
+          )}
 
-                    {isOwner && (
-                      <button
-                        className="groupEdit"
-                        onClick={() => toggleEditable("description")}
-                      >
-                        Edit
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-              {editable && isOwner && (
-                <div>
-                  <button className="savebtn" onClick={handleSaveClick}>
-                    Save
-                  </button>
-                  <button className="cancelbtn" onClick={handleInputBlur}>
-                    Cancel
-                  </button>
-                </div>
-              )}
-              <div className="owner">
-                <p className="ownertext">Created by:</p>
-                {group.owner && (
-                  <div className="owner-info">
-                    <span>{group.game.title}</span>
-                    {group.owner.profile_image ? (
-                      <img
-                        src={group.owner.profile_image}
-                        alt={group.owner.username}
-                      />
-                    ) : (
-                      <span
-                        style={{
-                          visibility: "hidden",
-                        }}
-                      ></span>
-                    )}
-                    {loggedIn ? (
-                      <Link to={`/users/${group.owner.id}`}>
-                        {group.owner.username}
-                      </Link>
-                    ) : (
-                      group.owner.username
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="likeDislikebtns">
-                <p>Join and leave your rating!</p>
-                <button
-                  aria-label="Like this group"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    addLike();
-                  }}
-                  className={
-                    !loggedIn || clicked.liked || !foundMember
-                      ? "disabledlike"
-                      : "likebtn"
-                  }
-                  disabled={!loggedIn || clicked.liked || !foundMember}
-                ></button>
-                <span className="spanlike">{group.likes}</span>
-                <button
-                  aria-label="Dislike this group"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    addDislike();
-                  }}
-                  className={
-                    !loggedIn || clicked.disliked || !foundMember
-                      ? "disableddislike"
-                      : "dislikebtn"
-                  }
-                  disabled={!loggedIn || clicked.disliked || !foundMember}
-                ></button>
-                <span className="dislikespan"> {group.dislikes}</span>
-              </div>
-              <div className="dropdownmembers">
-                <Dropdown>
-                  <Dropdown.Toggle
-                    as={Button}
-                    className="membersbtn"
-                    variant="secondary"
-                    id="dropdown-basic"
-                  >
-                    Members
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                    {!group.members || group.members.length === 0 ? (
-                      <h2 className="nomembers">No members have joined yet</h2>
-                    ) : (
-                      group.members &&
-                      group.members.map((member, ind) => (
-                        <Dropdown.Item className="member" key={ind}>
-                          <span className="memberuser">
-                            {loggedIn ? (
-                              <button
-                                className="member-link"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  clickMember(member.user);
-                                }}
-                              >
-                                {member.profile_image ? (
-                                  <img src={member.profile_image} alt="" />
-                                ) : (
-                                  <span style={{ visibility: "hidden" }}></span>
-                                )}
-                                {member.username}
-                              </button>
-                            ) : (
-                              <div>
-                                {member.profile_image ? (
-                                  <img src={member.profile_image} alt="" />
-                                ) : (
-                                  <span style={{ visibility: "hidden" }}></span>
-                                )}
-                                {member.username}
-                              </div>
-                            )}
-                          </span>
-                          {group.owner &&
-                            group.owner.username === user.username && (
-                              <button
-                                type="button"
-                                className="removeMember"
-                                aria-label={`Remove ${member.username}`}
-                                onClick={() =>
-                                  removeFromList(group.id, member.id)
-                                }
-                              >
-                                -
-                              </button>
-                            )}
-                        </Dropdown.Item>
-                      ))
-                    )}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </div>
-              <div className="chatbox" ref={chatBoxRef}>
-                {group.groupchat_messages &&
-                group.groupchat_messages.length === 0 ? (
-                  <h2 className="chatempty">No messages have been added yet</h2>
+          <div className="group-meta">
+            <div className="owner-line">
+              <Avatar src={group.owner?.profile_image} name={group.owner?.username} />
+              <span>
+                Created by{" "}
+                {loggedIn ? (
+                  <Link to={`/users/${group.owner.id}`}>
+                    {group.owner.username}
+                  </Link>
                 ) : (
-                  group.groupchat_messages &&
-                  group.groupchat_messages.map((message, ind) => (
-                    <div className="chat-message" key={message.id ?? ind}>
-                      <p className="timestamp">{message.created_at}</p>
-                      <h6 className="messageuser">{message.created_by}</h6>
-                      <p>{message.message_text}</p>
-                    </div>
-                  ))
+                  <strong>{group.owner.username}</strong>
                 )}
+              </span>
+            </div>
+
+            <div className="group-actions">
+              <div className="rating" title={rateHint}>
+                <button
+                  type="button"
+                  className={`rate-btn like ${
+                    group.user_rating === "like" ? "active" : ""
+                  }`}
+                  disabled={!canRate}
+                  aria-pressed={group.user_rating === "like"}
+                  aria-label={`Like this group (${group.likes})`}
+                  onClick={() => rate("like")}
+                >
+                  <ThumbUp /> {group.likes}
+                </button>
+                <button
+                  type="button"
+                  className={`rate-btn dislike ${
+                    group.user_rating === "dislike" ? "active" : ""
+                  }`}
+                  disabled={!canRate}
+                  aria-pressed={group.user_rating === "dislike"}
+                  aria-label={`Dislike this group (${group.dislikes})`}
+                  onClick={() => rate("dislike")}
+                >
+                  <ThumbDown /> {group.dislikes}
+                </button>
               </div>
-              <div className="inputmessage">
-                {loggedIn && (isOwner || foundMember) && (
-                  <Form
-                    className="review-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      addChat(groupId);
-                    }}
-                  >
-                    <Form.Group className="d-flex mb-3">
-                      <Form.Control
-                        className="mr-2"
-                        id="floatingTextarea"
-                        type="text"
-                        placeholder="Add a message"
-                        aria-label="Message"
-                        maxLength={200}
-                        onChange={onChangeHandler}
-                        value={chat}
-                      />
-                      {chat ? (
-                        <Button
-                          className="submitbtn"
-                          variant="secondary"
-                          type="submit"
-                        >
-                          Submit
-                        </Button>
-                      ) : (
-                        <Button
-                          className="submitbtn"
-                          variant="secondary"
-                          disabled
-                        >
-                          Submit
-                        </Button>
-                      )}
-                    </Form.Group>
-                  </Form>
-                )}
-              </div>
-              <div className="joinleavebtns">
-                {loggedIn && !isOwner && !foundMember && (
-                  <button
-                    className="joinbtn"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      joinGroup(groupId);
-                    }}
-                  >
-                    Join group
-                  </button>
-                )}
-                {loggedIn && foundMember && (
-                  <button
-                    className="leavebtn"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      leaveGroup(groupId);
-                    }}
-                  >
-                    Leave group
-                  </button>
-                )}
-              </div>
+              {loggedIn && !isOwner && !isMember && (
+                <button className="primary-btn" onClick={join}>
+                  Join group
+                </button>
+              )}
+              {loggedIn && isMember && (
+                <button className="ghost-btn" onClick={leave}>
+                  Leave group
+                </button>
+              )}
+              {!loggedIn && (
+                <Link className="ghost-btn" to="/login">
+                  Log in to join
+                </Link>
+              )}
             </div>
           </div>
-        </ul>
-      )}
+          {rateHint && <p className="hint">{rateHint}.</p>}
+        </header>
+
+        <div className="group-columns">
+          <section className="surface members-card">
+            <h2>
+              Members <span className="count-badge">{members.length + 1}</span>
+            </h2>
+            <ul className="member-list">
+              <li>
+                <Avatar
+                  src={group.owner.profile_image}
+                  name={group.owner.username}
+                />
+                {loggedIn ? (
+                  <Link to={`/users/${group.owner.id}`}>
+                    {group.owner.username}
+                  </Link>
+                ) : (
+                  <span>{group.owner.username}</span>
+                )}
+                <span className="role-badge">Owner</span>
+              </li>
+              {members.map((m) => (
+                <li key={m.id}>
+                  <Avatar src={m.profile_image} name={m.username} />
+                  {loggedIn ? (
+                    <Link to={`/users/${m.user}`}>{m.username}</Link>
+                  ) : (
+                    <span>{m.username}</span>
+                  )}
+                  {isOwner && (
+                    <button
+                      type="button"
+                      className="remove-btn"
+                      aria-label={`Remove ${m.username}`}
+                      onClick={() => removeMember(m)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {members.length === 0 && (
+              <p className="empty-note">No one has joined yet.</p>
+            )}
+          </section>
+
+          <section className="surface chat-card">
+            <h2>Group chat</h2>
+            <div className="chatbox" ref={chatBoxRef} aria-live="polite">
+              {messages.length === 0 ? (
+                <p className="empty-note">No messages yet. Say hello!</p>
+              ) : (
+                messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`chat-message ${
+                      m.created_by === user.username ? "mine" : ""
+                    }`}
+                  >
+                    <div className="chat-meta">
+                      <strong>{m.created_by}</strong>
+                      <time>{m.created_at}</time>
+                    </div>
+                    <p>{m.message_text}</p>
+                  </div>
+                ))
+              )}
+            </div>
+            {canChat ? (
+              <form className="chat-form" onSubmit={sendMessage}>
+                <input
+                  className="form-control"
+                  placeholder="Write a message"
+                  aria-label="Message"
+                  maxLength={200}
+                  value={chat}
+                  onChange={(e) => setChat(e.target.value)}
+                />
+                <button
+                  className="primary-btn"
+                  type="submit"
+                  disabled={!chat.trim()}
+                >
+                  Send
+                </button>
+              </form>
+            ) : (
+              <p className="hint">
+                {loggedIn
+                  ? "Join the group to chat with its members."
+                  : "Log in and join the group to chat."}
+              </p>
+            )}
+          </section>
+        </div>
+      </div>
+
+      <Modal show={!!error} onHide={() => setError("")}>
+        <Modal.Header closeButton>
+          <Modal.Title>Error</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{error}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setError("")}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
+
 export default GroupPage;
