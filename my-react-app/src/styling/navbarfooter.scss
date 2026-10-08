@@ -168,16 +168,6 @@ li {
   }
 }
 
-@media (max-width: 480px) {
-  .site-footer ul {
-    gap: 4px 16px;
-  }
-  .site-footer nav a,
-  .site-footer nav button {
-    font-size: 0.85rem;
-  }
-}
-
 @media (max-width: 576px) {
   .site-header .brand {
     font-size: 0.9rem;
@@ -223,11 +213,20 @@ li {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
     gap: 8px 28px;
+  }
+
+  // Links are <a> but Logout is a <button>; render both as identical blocks so
+  // they share one baseline.
+  li {
+    display: flex;
   }
 
   nav a,
   nav button {
+    display: block;
+    margin: 0;
     font: inherit;
     line-height: 1.4;
     font-weight: 500;
@@ -250,5 +249,19 @@ li {
   .footer-note {
     font-size: 0.8rem;
     color: #8f96b8;
+  }
+}
+
+@media (max-width: 480px) {
+  // Keep all links on one row: the font scales with the screen width.
+  .site-footer ul {
+    flex-wrap: nowrap;
+    gap: 4px 12px;
+  }
+  .site-footer nav a,
+  .site-footer nav button {
+    font-size: clamp(0.62rem, 3.1vw, 0.85rem);
+    padding: 4px 0;
+    white-space: nowrap;
   }
 }
