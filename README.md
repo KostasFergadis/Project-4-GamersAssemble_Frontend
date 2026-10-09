@@ -30,6 +30,7 @@ The backend lives in the separate `Project-4-GamersAssemble_Backend` repo. The o
 8.  Future Content and Improvements
 9.  Key Learnings
 10. Credits
+11. Original version (2023)
 
 ## Project Overview
 
@@ -41,7 +42,24 @@ As most actions are locked before authentication registration would be required,
 
 ![Alt text](https://i.imgur.com/RE50Eee.png "Optional title")
 
+> **Update (October 2026):** the app has been revisited since the original 17-day build. The UI was redesigned (new header, footer, browse, game, group and profile pages, mobile layout), bugs and security issues were fixed, and the project now deploys to Render instead of Heroku. Screenshots in the "Final project" section show the current UI; the original 2023 version is kept below under "Original version (2023)".
+
 ## Features
+
+- Home page with a gaming quote and a button to the browse games page
+- Register and login pages with error messages shown for invalid input or an unreachable server
+- Redesigned header and footer with a menu button, links that adapt to whether you are logged in (Register/Login, or your profile and Logout) and a profile avatar
+- Browse page with a search box and pagination (9 games per page); the page number and search term are kept in the URL so links can be shared
+- Game page with cover image, genres, developer, release date, platforms, an "Official site" link, a description and the list of groups for that game, with a "Create a group" button
+- Group page with member list (owner badge, owner can remove members), live group chat with your own messages highlighted, and like/dislike voting for members
+- Group owners can edit or delete their group
+- Profile page with avatar, bio, Discord username, group counts, "Edit profile", a create-a-group form and cards for your groups
+- Fully responsive layout, including a mobile layout for the home, login, register and footer
+- Backend API built with Python Django, frontend built with React
+- Deployable on Netlify (frontend) and Render (backend), configured through `VITE_API_URL`
+
+<details>
+<summary>Original features (2023)</summary>
 
 - Home page displaying a quote for games and a button to go to the browse games page
 - Register and login page for user authentication
@@ -54,6 +72,8 @@ As most actions are locked before authentication registration would be required,
 - Backend API built with Python Django
 - Frontend built with React
 - Database using Heroku to deploy
+
+</details>
 
 ## The Brief
 
@@ -77,6 +97,8 @@ As most actions are locked before authentication registration would be required,
 
 ### Frontend:
 
+_Current dependencies: React, React DOM, React Router, Axios, Bootstrap, React Bootstrap, JWT Decode, Sass and Vite (see `my-react-app/package.json`). The list below is the original 2023 list._
+
 - React: a JavaScript library for building user interfaces
 - React DOM: provides an API for manipulating the DOM
 - React Router Dom: a popular routing library for React applications
@@ -84,9 +106,9 @@ As most actions are locked before authentication registration would be required,
 - Bootstrap: a popular CSS framework for building responsive websites
 - React Bootstrap: a library that integrates Bootstrap components with React
 - JWT Decode: a library for decoding JSON Web Tokens
-- React Circular Menu: a circular menu component for React applications
+- React Circular Menu: a circular menu component for React applications *(original version; the menu is now built in)*
 - Sass: a preprocessor scripting language that is interpreted into Cascading Style Sheets (CSS)
-- Styled Components: a library for styling React components using CSS-in-JS syntax
+- Styled Components: a library for styling React components using CSS-in-JS syntax *(original version)*
 - @types/react: type definitions for React
 - @types/react-dom: type definitions for React DOM
 - @vitejs/plugin-react: a plugin for Vite, a build tool for modern web development, that enables support for React applications
@@ -99,7 +121,8 @@ As most actions are locked before authentication registration would be required,
 - Postman
 - Npm + Pipenv
 - Netlify
-- Heroku
+- Render (current backend host)
+- Heroku (original backend host, no longer available)
 
 ## Timeline
 
@@ -234,31 +257,65 @@ On the last day, I allocated some time to address some of the remaining bugs and
 
 ## Final project:
 
+Current UI (redesigned in 2026).
+
 #### Homepage:
 
-![Alt text](https://i.imgur.com/S7FzKWl.png "Optional title")
+![Homepage](screenshots/home.png)
 
 #### Browse games page:
 
-![Alt text](https://i.imgur.com/SHhkRB2.png "Optional title")
+![Browse games page](screenshots/browse.png)
 
 #### Game page:
 
-![Alt text](https://i.imgur.com/pChWUss.png "Optional title")
+![Game page](screenshots/game.png)
 
 #### Group page:
 
-![Alt text](https://i.imgur.com/of13eYD.png "Optional title")
+![Group page](screenshots/group.png)
 
 #### User's page:
 
-![Alt text](https://i.imgur.com/vbYVD38.png "Optional title")
+![User's page](screenshots/user.png)
 
 #### Register page:
 
-![Alt text](https://i.imgur.com/XfQdZNb.png "Optional title")
+![Register page](screenshots/register.png)
 
 #### Login page:
+
+![Login page](screenshots/login.png)
+
+## Original version (2023)
+
+The screenshots below show the original UI as submitted at the end of the course, before the redesign.
+
+##### Homepage:
+
+![Alt text](https://i.imgur.com/S7FzKWl.png "Optional title")
+
+##### Browse games page:
+
+![Alt text](https://i.imgur.com/SHhkRB2.png "Optional title")
+
+##### Game page:
+
+![Alt text](https://i.imgur.com/pChWUss.png "Optional title")
+
+##### Group page:
+
+![Alt text](https://i.imgur.com/of13eYD.png "Optional title")
+
+##### User's page:
+
+![Alt text](https://i.imgur.com/vbYVD38.png "Optional title")
+
+##### Register page:
+
+![Alt text](https://i.imgur.com/XfQdZNb.png "Optional title")
+
+##### Login page:
 
 ![Alt text](https://i.imgur.com/eXlNJYM.png "Optional title")
 
@@ -275,6 +332,8 @@ During the project, I encountered various challenges, including resolving persis
 ## Bugs
 
 There are occasional internal server errors when refreshing or navigating pages, specifically on the user page. The issue appears to stem from attempting to retrieve both the currently logged-in user's data and another user's ID data when clicking on a username link in the navbar, footer, or on another user's profile page. This conflict may cause the page to break and malfunction, but a refresh usually resolves the issue. One potential solution is to selectively render a user's information based on whether they are the logged-in user or another user. Additionally, it may be helpful to review the code and ensure that any incorrect logic is corrected.
+
+**Update (2026):** the user page `/users/undefined` bug described above has been fixed; the page now loads the logged-in user correctly and errors no longer crash it when the server is unreachable.
 
 ## Future Content and Improvements
 
